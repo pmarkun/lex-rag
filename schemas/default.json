@@ -1,0 +1,30 @@
+{
+    "class": "PositiveLibraryDocument",
+    "description": "Documentos armazenados na Biblioteca Positiva da Lex",
+    "properties": [
+        {
+            "name": "doc_name",
+            "dataType": ["string"],
+            "description": "O nome do documento"
+        },
+        {
+            "name": "doc_type",
+            "dataType": ["string"],
+            "description": "O tipo do documento (configurável)"
+        },
+        {
+            "name": "content",
+            "dataType": ["text"],
+            "description": "O conteúdo do documento"
+        }
+    ],
+    "vectorizer": "text2vec-openai",
+    "moduleConfig": {
+        "text2vec-openai": {
+            "vectorizeContent": true
+        },
+        "generative-openai": {
+            "generateContent": true
+        }
+    }
+}
