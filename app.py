@@ -3,6 +3,8 @@ import json
 import streamlit as st
 import weaviate
 from weaviate.auth import AuthApiKey
+from textblob import TextBlob
+from textblob import download_corpora
 from dotenv import load_dotenv
 
 # Configura a interface para ocupar a tela wide
@@ -28,6 +30,19 @@ else:
             "X-OpenAI-Api-Key": openai_api_key
         }
     )
+
+    def generate_chunked_text(text, chunk_size):
+        download_corpora.download_all()
+        blob = TextBlob(text)
+        chunks = []
+        current_chunk = ""
+        for sentence in blob.sentences:
+            current_chunk += sentence
+            if len(current_chunk) > chunk_size:
+                chunks.append(current_chunk)
+                current_chunk = ""
+
+        return chunks
 
     def schema_exists(class_name):
         try:
@@ -61,11 +76,11 @@ else:
     def import_txt_file(file, chunk_size, doc_name, doc_type, collection_name):
         try:
             content = file.read().decode('utf-8')
-            chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+            chunks = generate_chunked_text(content, chunk_size)
             
             with client.batch as batch:
                 for chunk in chunks:
-                    batch.add_data_object(
+                    id = batch.add_data_object(
                         {
                             "content": chunk,
                             "doc_name": doc_name,
