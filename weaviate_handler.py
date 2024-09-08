@@ -4,7 +4,7 @@ import weaviate
 from weaviate.auth import AuthApiKey
 from weaviate.classes.query import Filter
 import csv
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import spacy
 import chardet
 
@@ -12,7 +12,7 @@ import chardet
 nlp = spacy.load('pt_core_news_sm')
 
 # Carrega as variáveis de ambiente do arquivo .env
-# load_dotenv()
+load_dotenv()
 
 weaviate_host = os.getenv("WEAVIATE_HOST")
 weaviate_api_key = os.getenv("WEAVIATE_API_KEY")
