@@ -3,8 +3,10 @@ import json
 import weaviate
 from weaviate.auth import AuthApiKey
 from weaviate.classes.query import Filter
+import csv
 from dotenv import load_dotenv
 import spacy
+import chardet
 
 # Carrega o modelo spaCy para português
 nlp = spacy.load('pt_core_news_sm')
@@ -53,14 +55,19 @@ def schema_exists(class_name):
     except weaviate.exceptions.UnexpectedStatusCodeException:
         return False
 
-def import_txt_file(file, chunk_size, doc_name, doc_type, collection_name):
-    #try:
-    # Salva uma cópia do arquivo no filesystem
+
+def import_file(file, chunk_size, doc_name, doc_type, collection_name):
     os.makedirs('data/upload', exist_ok=True)
     file_path = os.path.join('data/upload', file.name)
     with open(file_path, 'wb') as f:
         f.write(file.getbuffer())
+    if file.name.endswith('.txt'):
+        return import_txt_file(file, chunk_size, doc_name, doc_type, collection_name)
+    
+    return import_csv_file(file, doc_name, doc_type, collection_name, file_path)
 
+
+def import_txt_file(file, chunk_size, doc_name, doc_type, collection_name):
     content = file.read().decode('utf-8')
     chunks = generate_chunked_text(content, chunk_size)
     
@@ -75,8 +82,21 @@ def import_txt_file(file, chunk_size, doc_name, doc_type, collection_name):
                 class_name=collection_name
             )
     return f"Arquivo '{doc_name}' vetorizado com sucesso em {len(chunks)} chunks!"
-    #except Exception as e:
-    #    return f"Erro ao vetorizar o arquivo: {e}"
+
+def detect_encoding(file_path):
+    with open(file_path, 'rb') as f:
+        raw_data = f.read(50000)  # Leia os primeiros 50.000 bytes para adivinhar a codificação
+    result = chardet.detect(raw_data)
+    return result['encoding']
+
+def import_csv_file(file, doc_name, doc_type, collection_name, file_path):
+    with open(file_path, mode='r', encoding=detect_encoding(file_path)) as csv_file:
+        csv_reader = csv.DictReader(csv_file, delimiter=';')
+        with client.batch as batch:
+            for row in csv_reader:
+                data_object = {"content": row, "doc_name": doc_name, "doc_type": doc_type}
+                batch.add_data_object(data_object, class_name=collection_name)
+    return f"Arquivo CSV '{doc_name}' importado com sucesso!"
 
 
 def remove_document_from_weaviate(doc_name, collection_name):
@@ -135,3 +155,4 @@ def get_chunks_by_file_name(doc_name, collection_name):
         return chunks
     except Exception as e:
         return f"Erro ao carregar os chunks do arquivo: {e}"
+

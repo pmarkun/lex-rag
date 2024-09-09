@@ -1,12 +1,13 @@
 import streamlit as st
 from weaviate_handler import (
-    import_txt_file,
+    import_file,
     remove_document_from_weaviate,
     load_schema,
     get_vectorized_files,
     get_chunks_by_file_name,
     schema_exists
 )
+
 
 # Configura a interface para ocupar a tela wide
 st.set_page_config(layout="wide")
@@ -29,14 +30,14 @@ st.title("Vetorizador de Arquivos TXT para a Biblioteca Positiva da Lex")
 
 collection_name_input = st.text_input("Nome da Coleção no Weaviate", value=collection_name)
 
-uploaded_file = st.file_uploader("Escolha um arquivo TXT para vetorizar", type=["txt"])
+uploaded_file = st.file_uploader("Escolha um arquivo TXT para vetorizar", type=["txt", "csv"])
 chunk_size = st.number_input("Tamanho dos chunks (número de caracteres)", min_value=1000, max_value=50000, value=10000)
 doc_name = st.text_input("Nome do Documento")
 doc_type = st.text_input("Tipo do Documento (configurável)")
 
 if uploaded_file and doc_name and doc_type and collection_name_input:
     if st.button("Vetorizar Arquivo"):
-        message = import_txt_file(uploaded_file, chunk_size, doc_name, doc_type, collection_name_input)
+        message = import_file(uploaded_file, chunk_size, doc_name, doc_type, collection_name_input)
         st.success(message)
 
 # Layout de duas colunas
